@@ -83,7 +83,6 @@ jobs:
         host: ${{ env.DEPLOY_HOST }}
         username: ${{ env.DEPLOY_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        # Restart the dedicated systemd service (officeplanner-api.service)
         script: |
           sudo systemctl restart officeplanner-api.service
           sudo systemctl status officeplanner-api.service
