@@ -1,0 +1,86 @@
+name: Deploy Test .NET/React App to Ubuntu
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    env:
+      DEPLOY_USER: thearchivist
+      DEPLOY_HOST: 77.169.87.238 
+
+    steps:
+    # -----------------------------
+    # 1. Checkout Code (MUST BE FIRST)
+    # -----------------------------
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # -----------------------------
+    # 2. Build React Frontend
+    # -----------------------------
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20' 
+
+    - name: Install Frontend Dependencies
+      run: npm install
+      # CORRECT PATH: 'frontend' is relative to the repository root
+      working-directory: frontend 
+
+    - name: Build React App (Vite generates 'dist')
+      run: npm run build
+      # CORRECT PATH
+      working-directory: frontend
+
+    # -----------------------------
+    # 3. Build .NET Backend
+    # -----------------------------
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        # **IMPORTANT: Use the version your project targets (e.g., '8.0.x' or '9.0.x')**
+        dotnet-version: '8.0.x' 
+
+    - name: Restore and Publish Backend
+      # Publish command targets your specific project file inside the 'backend' directory
+      run: dotnet publish ./backend/OfficePlanner.Api.csproj -c Release -o ./publish -r linux-x64 --self-contained false 
+      
+    # -----------------------------
+    # 4. Deploy Files via SCP (Secure Copy)
+    # -----------------------------
+    
+    - name: Install SSH Key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: 'placeholder' 
+        
+    - name: Deploy Frontend Files
+      # Deploy the built 'dist' folder content to the server's static root
+      run: scp -r ./frontend/dist/* ${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:/var/www/officeplanner/frontend/
+
+    - name: Deploy Backend Files
+      # Deploy the built 'publish' folder content to the server's API root
+      run: scp -r ./publish/* ${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:/var/www/officeplanner/backend/
+
+    # -----------------------------
+    # 5. Restart Services via SSH
+    # -----------------------------
+
+    - name: Restart .NET Service
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ env.DEPLOY_HOST }}
+        username: ${{ env.DEPLOY_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        # Restart the dedicated systemd service (officeplanner-api.service)
+        script: |
+          sudo systemctl restart officeplanner-api.service
+          sudo systemctl status officeplanner-api.service
