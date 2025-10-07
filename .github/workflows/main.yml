@@ -1,0 +1,50 @@
+name: Deploy Test .NET/React App to Ubuntu
+
+on:
+
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    env:
+      # !! REPLACE THESE PLACEHOLDERS !!
+      DEPLOY_USER: youruser 
+      DEPLOY_HOST: your.server.ip.address 
+
+    steps:
+    # ... (omitted build steps for React and .NET, which remain unchanged)
+
+    # -----------------------------
+    # 2. Deploy Files via SCP 
+    # -----------------------------
+    
+    - name: Install SSH Key
+    # ... (omitted SSH key setup)
+        
+    - name: Deploy Frontend Files
+      # **UPDATED DESTINATION PATH**
+      run: scp -r ./frontend/dist/* $DEPLOY_USER@$DEPLOY_HOST:/var/www/officeplanner/frontend/
+
+    - name: Deploy Backend Files
+      # **UPDATED DESTINATION PATH**
+      run: scp -r ./publish/* $DEPLOY_USER@$DEPLOY_HOST:/var/www/officeplanner/backend/
+
+    # -----------------------------
+    # 3. Restart Services via SSH
+    # -----------------------------
+
+    - name: Restart .NET Service
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ env.DEPLOY_HOST }}
+        username: ${{ env.DEPLOY_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        # **UPDATED SERVICE NAME**
+        script: |
+          sudo systemctl restart officeplanner-api.service
+          sudo systemctl status officeplanner-api.service
