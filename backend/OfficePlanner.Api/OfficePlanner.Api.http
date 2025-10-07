@@ -1,0 +1,35 @@
+@OfficePlanner_Api_HostAddress = http://turtlebase.duckdns.org
+
+### Register request
+POST http://localhost:5062/api/employee/register
+Content-Type: application/json
+
+{
+  "email": "user@demo.local",
+  "password": "demo",
+  "name": "Demo User"
+}
+
+### Login request
+POST http://localhost:5062/api/employee/login
+Content-Type: application/json
+
+{
+  "email": "floor@frontend.nl",
+  "password": "floor123"
+}
+
+### Login request
+POST http://localhost:5062/api/employee/login
+Content-Type: application/json
+
+{
+  "email": "admin@turtleplanner.nl",
+  "password": "admin"
+}
+
+### Test Database Connection
+GET http://localhost:5062/api/room/test-connection
+
+### Get All Employees
+GET http://localhost:5062/api/employee/all
