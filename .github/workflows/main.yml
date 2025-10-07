@@ -60,8 +60,11 @@ jobs:
       uses: shimataro/ssh-key-action@v2
       with:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        known_hosts: 'placeholder' 
-        
+        known_hosts: |
+          77.169.87.238 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCgobOHuSV7N5Mba9PCf/yzx4l6qiphoB0zXQwPx8lvNl0DYwKX/BzaBb+CzWtAycH6QF+VFs0Cglum37ibigSnMGZNyupEeln78W9L1bPw07vtdC5SjQtCZucRjX8U5Eh1qMZxizgXEvopfToI1wF+xFAgIzuz2hugJ5MkwQ0wk20/46XrAav9RY1KcXy7e3ocQLI8X98EXSX7L8hXZWVD3RN08wBHMqZzM4CSrnzhpcFWjPmz4GDB5dL1wVPEZtb84NTtrgE5VfyQ2wvxgzpN1L6Fxu3BKECnL+3A8wMcNKsON3nWr52oITaonjOufNfRXZi6+I2+Am+AtxqgJ9EZxMX1rYtfvq2idzznBnDd5lW3hbjv+V+RVGRSaR1AynyYXKP2M7syPaA2Qem+/+uj6GCBVaj1LJRslH/VeK6XOYW1OzUZYs4ikSzxsX3wqN+AzSpTfA0NeByN2JINd8dELtdSLxrYoxApL638AnQzeeDoX+TOXAHBdfzHlk12ezU=
+          77.169.87.238 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBKgOCCwv44nJD8NH2eWUXwDxwkMO0nOJzpqvm1OZWZwvUg4GjYLCUx5C4tRnLtmGliRM3WvD12BRRNj0yhvjRI8=
+          77.169.87.238 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIAniOcricyxU2n9lCztMNYTbEAk3foY5ynY73u31hjh
+  
     - name: Deploy Frontend Files
       # Deploy the built 'dist' folder content to the server's static root
       run: scp -r ./frontend/dist/* ${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:/var/www/officeplanner/frontend/
