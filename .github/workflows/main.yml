@@ -1,7 +1,6 @@
 name: Deploy Test .NET/React App to Ubuntu
 
 on:
-
   push:
     branches: [ "main" ]
   pull_request:
@@ -12,30 +11,65 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
-      # !! REPLACE THESE PLACEHOLDERS !!
-      DEPLOY_USER: youruser 
-      DEPLOY_HOST: your.server.ip.address 
+      DEPLOY_USER: theacrchivist
+      DEPLOY_HOST: 77.169.87.238 
 
     steps:
-    # ... (omitted build steps for React and .NET, which remain unchanged)
+    # -----------------------------
+    # 1. Checkout Code
+    # -----------------------------
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
     # -----------------------------
-    # 2. Deploy Files via SCP 
+    # 2. Build React Frontend
+    # -----------------------------
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20' # Use Node 20 as standard LTS
+
+    - name: Install Frontend Dependencies
+      run: npm install
+      working-directory: ./frontend 
+
+    - name: Build React App (Vite generates 'dist')
+      run: npm run build
+      working-directory: ./frontend
+
+    # -----------------------------
+    # 3. Build .NET Backend
+    # -----------------------------
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x' # Ensure this matches your project's target framework
+
+    - name: Restore and Publish Backend
+      # This command publishes the API files to a local 'publish' directory
+      run: dotnet publish ./backend/OfficePlanner.Api.csproj -c Release -o ./publish -r linux-x64 --self-contained false 
+      
+    # -----------------------------
+    # 4. Deploy Files via SCP (Secure Copy)
     # -----------------------------
     
+    # Set up SSH agent and use the private key from GitHub Secrets
     - name: Install SSH Key
-    # ... (omitted SSH key setup)
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: 'placeholder' 
         
     - name: Deploy Frontend Files
-      # **UPDATED DESTINATION PATH**
-      run: scp -r ./frontend/dist/* $DEPLOY_USER@$DEPLOY_HOST:/var/www/officeplanner/frontend/
+      # Copy contents of the built 'dist' folder to the server's static root
+      run: scp -r ./frontend/dist/* ${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:/var/www/officeplanner/frontend/
 
     - name: Deploy Backend Files
-      # **UPDATED DESTINATION PATH**
-      run: scp -r ./publish/* $DEPLOY_USER@$DEPLOY_HOST:/var/www/officeplanner/backend/
+      # Copy contents of the built 'publish' folder to the server's API root
+      run: scp -r ./publish/* ${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:/var/www/officeplanner/backend/
 
     # -----------------------------
-    # 3. Restart Services via SSH
+    # 5. Restart Services via SSH
     # -----------------------------
 
     - name: Restart .NET Service
@@ -44,7 +78,7 @@ jobs:
         host: ${{ env.DEPLOY_HOST }}
         username: ${{ env.DEPLOY_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        # **UPDATED SERVICE NAME**
+        # Restart the dedicated systemd service (officeplanner-api.service)
         script: |
           sudo systemctl restart officeplanner-api.service
           sudo systemctl status officeplanner-api.service
