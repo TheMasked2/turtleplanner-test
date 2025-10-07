@@ -50,7 +50,7 @@ jobs:
 
     - name: Restore and Publish Backend
       # Publish command targets your specific project file inside the 'backend' directory
-      run: dotnet publish ./backend/OfficePlanner.Api.csproj -c Release -o ./publish -r linux-x64 --self-contained false 
+      run: dotnet publish ./backend/OfficePlanner.Api/OfficePlanner.Api.csproj -c Release -o ./publish -r linux-x64 --self-contained false 
       
     # -----------------------------
     # 4. Deploy Files via SCP (Secure Copy)
