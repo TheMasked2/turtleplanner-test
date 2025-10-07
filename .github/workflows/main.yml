@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
-      DEPLOY_USER: theacrchivist
+      DEPLOY_USER: thearchivist
       DEPLOY_HOST: 77.169.87.238 
 
     steps:
     # -----------------------------
-    # 1. Checkout Code
+    # 1. Checkout Code (MUST BE FIRST)
     # -----------------------------
     - name: Checkout Code
       uses: actions/checkout@v4
@@ -27,15 +27,17 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20' # Use Node 20 as standard LTS
+        node-version: '20' 
 
     - name: Install Frontend Dependencies
       run: npm install
-      working-directory: ./frontend 
+      # CORRECT PATH: 'frontend' is relative to the repository root
+      working-directory: frontend 
 
     - name: Build React App (Vite generates 'dist')
       run: npm run build
-      working-directory: ./frontend
+      # CORRECT PATH
+      working-directory: frontend
 
     # -----------------------------
     # 3. Build .NET Backend
@@ -43,17 +45,17 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x' # Ensure this matches your project's target framework
+        # **IMPORTANT: Use the version your project targets (e.g., '8.0.x' or '9.0.x')**
+        dotnet-version: '8.0.x' 
 
     - name: Restore and Publish Backend
-      # This command publishes the API files to a local 'publish' directory
+      # Publish command targets your specific project file inside the 'backend' directory
       run: dotnet publish ./backend/OfficePlanner.Api.csproj -c Release -o ./publish -r linux-x64 --self-contained false 
       
     # -----------------------------
     # 4. Deploy Files via SCP (Secure Copy)
     # -----------------------------
     
-    # Set up SSH agent and use the private key from GitHub Secrets
     - name: Install SSH Key
       uses: shimataro/ssh-key-action@v2
       with:
@@ -61,11 +63,11 @@ jobs:
         known_hosts: 'placeholder' 
         
     - name: Deploy Frontend Files
-      # Copy contents of the built 'dist' folder to the server's static root
+      # Deploy the built 'dist' folder content to the server's static root
       run: scp -r ./frontend/dist/* ${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:/var/www/officeplanner/frontend/
 
     - name: Deploy Backend Files
-      # Copy contents of the built 'publish' folder to the server's API root
+      # Deploy the built 'publish' folder content to the server's API root
       run: scp -r ./publish/* ${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}:/var/www/officeplanner/backend/
 
     # -----------------------------
