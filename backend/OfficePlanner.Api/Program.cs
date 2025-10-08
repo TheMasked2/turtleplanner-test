@@ -30,7 +30,7 @@ builder.Services.AddHttpContextAccessor();
 
 // CORS (adjust origin to your frontend)
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.WithOrigins("http://localhost:5173")
+    p.WithOrigins("http://turtlebase.duckdns.org")
      .AllowAnyHeader()
      .AllowAnyMethod()
      .AllowCredentials()

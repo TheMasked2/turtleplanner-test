@@ -1,6 +1,6 @@
 // Frontend communicates with backend API here!
 
-const base = import.meta.env.VITE_API_URL;
+const base = "http://turtlebase.duckdns.org";
 
 // Types that match the backend
 export type User = { id: number; email: string; name: string; role: "Admin" | "User" };
